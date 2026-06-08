@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章详情 - 个人简历</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --text-color: #1f2937;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --border-color: #e5e7eb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .back {
+            margin-bottom: 20px;
+        }
+
+        .back a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 15px;
+        }
+
+        .back a:hover {
+            text-decoration: underline;
+        }
+
+        .title {
+            font-size: 24px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .date {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .content {
+            font-size: 16px;
+            line-height: 1.8;
+        }
+
+        .content p {
+            margin-bottom: 18px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="card">
+            <div class="back">
+                <a href="index.html">← 返回主页</a>
+            </div>
+            <h1 class="title" id="title">文章标题加载中...</h1>
+            <div class="date" id="date"></div>
+            <div class="content" id="content"></div>
+        </div>
+    </div>
+
+    <script>
+        // 文章数据（和主页保持一致）
+        const posts = [
+            {
+                id: 1,
+                title: "如何利用 GitHub Issues 做免费博客",
+                date: "2026-06-01",
+                content: `
+<p>大家好，今天给大家分享一个零成本搭建博客的方法。</p>
+<p>我们可以直接用 GitHub Issues 写文章，不用服务器、不用数据库，非常适合个人简历网站使用。</p>
+<p>优点：免费、稳定、支持 Markdown、自动同步。</p>
+`
+            },
+            {
+                id: 2,
+                title: "2026 前端性能优化实战总结",
+                date: "2026-05-15",
+                content: `
+<p>前端性能直接影响用户体验，我总结了几个最有效的优化方案：</p>
+<p>1. 图片压缩与懒加载</p>
+<p>2. CSS/JS 压缩</p>
+<p>3. 减少请求数</p>
+<p>4. 使用缓存策略</p>
+`
+            }
+        ];
+
+        // 获取文章ID
+        const urlParams = new URLSearchParams(window.location.search);
+        const postId = urlParams.get('id');
+
+        // 找到对应文章
+        const post = posts.find(item => item.id == postId);
+
+        if (post) {
+            document.getElementById("title").innerText = post.title;
+            document.getElementById("date").innerText = post.date;
+            document.getElementById("content").innerHTML = post.content;
+        } else {
+            document.getElementById("title").innerText = "文章不存在";
+            document.getElementById("content").innerHTML = "<p>返回主页查看其他文章</p>";
+        }
+    </script>
+</body>
+</html>
