@@ -308,7 +308,7 @@
                             li.className = 'post-item';
                             li.innerHTML = `
                                 <div class="time">${date}</div>
-                                <a href="${issue.html_url}" target="_blank" class="post-title">${issue.title}</a>
+                                <a href="post.html?id=${issue.id}" class="post-title">${issue.title}</a>
                             `;
                             container.appendChild(li);
                         }
