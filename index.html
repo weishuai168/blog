@@ -36,7 +36,7 @@
             gap: 20px;
         }
 
-        /* 左侧侧边栏（简历名片）- 修复原标签错误+样式优化 */
+        /* 左侧侧边栏 */
         .sidebar {
             background: var(--card-bg);
             padding: 30px;
@@ -51,10 +51,10 @@
             width: 120px;
             height: 120px;
             border-radius: 50%;
-            background: #e5e7eb url('https://via.placeholder.com/120') center/cover; /* 占位图优化 */
+            background: #e5e7eb url('https://via.placeholder.com/120') center/cover;
             margin: 0 auto 20px;
             display: block;
-            border: 3px solid var(--primary-color); /* 增加头像边框，强化品牌色 */
+            border: 3px solid var(--primary-color);
         }
 
         .name {
@@ -71,7 +71,7 @@
             font-weight: 600;
             margin-bottom: 20px;
             padding: 4px 12px;
-            background: rgba(37, 99, 235, 0.1); /* 增加背景色，提升辨识度 */
+            background: rgba(37, 99, 235, 0.1);
             border-radius: 20px;
             display: inline-block;
         }
@@ -79,6 +79,7 @@
         .info-list {
             list-style: none;
             font-size: 0.9rem;
+            margin-bottom: 25px;
         }
 
         .info-list li {
@@ -89,7 +90,7 @@
         }
 
         .info-list li span:first-child {
-            color: #6b7280; /* 标签文字灰度化，主次分明 */
+            color: #6b7280;
         }
 
         .info-list li a {
@@ -100,7 +101,27 @@
 
         .info-list li a:hover {
             text-decoration: underline;
-            color: #1d4ed8; /* 加深 hover 色 */
+        }
+
+        /* 左侧模块标题 */
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 25px 0 12px 0;
+            color: var(--primary-color);
+        }
+
+        /* 左侧关于我 + 工作经历 */
+        .sidebar-desc {
+            font-size: 14px;
+            line-height: 1.7;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-job {
+            font-size: 14px;
+            line-height: 1.7;
+            margin-bottom: 8px;
         }
 
         /* 右侧主内容区 */
@@ -115,11 +136,6 @@
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: box-shadow 0.3s; /* 增加卡片 hover 动效 */
-        }
-
-        .card:hover {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); /* 卡片悬浮阴影加深 */
         }
 
         h2 {
@@ -128,47 +144,6 @@
             margin-bottom: 20px;
             font-size: 1.3rem;
             font-weight: 700;
-        }
-
-        .timeline-item {
-            margin-bottom: 20px;
-            position: relative;
-            padding-left: 20px;
-            border-left: 2px solid var(--border-color);
-            padding-bottom: 10px; /* 增加内边距，避免时间轴截断 */
-        }
-
-        .timeline-item:last-child {
-            border-left: 2px solid transparent; /* 最后一个项去掉时间轴边框 */
-            margin-bottom: 0;
-        }
-
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -6px;
-            top: 6px;
-            width: 10px;
-            height: 10px;
-            background: var(--primary-color);
-            border-radius: 50%;
-            transition: transform 0.2s;
-        }
-
-        .timeline-item:hover::before {
-            transform: scale(1.2); /* 时间轴节点悬浮放大 */
-        }
-
-        .time {
-            font-size: 0.85rem;
-            color: #6b7280;
-            margin-bottom: 4px; /* 增加时间与标题间距 */
-        }
-
-        .timeline-item h3 {
-            font-size: 1.1rem;
-            margin-bottom: 8px;
-            font-weight: 600;
         }
 
         /* 文章列表样式 */
@@ -185,8 +160,8 @@
         }
 
         .post-item:hover {
-            background: rgba(37, 99, 235, 0.05); /* 文章项悬浮背景 */
-            border-left: 2px solid var(--primary-color); /* 左侧边框高亮 */
+            background: rgba(37, 99, 235, 0.05);
+            border-left: 2px solid var(--primary-color);
         }
 
         .post-item:last-child {
@@ -199,7 +174,7 @@
             font-size: 1.1rem;
             font-weight: 600;
             transition: color 0.2s;
-            display: block; /* 标题独占一行 */
+            display: block;
             margin-top: 4px;
         }
 
@@ -207,7 +182,14 @@
             color: var(--primary-color);
         }
 
-        /* 响应式设计 - 修复原 sidebar 选择器错误 */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        /* 响应式 */
         @media (max-width: 768px) {
             .container {
                 grid-template-columns: 1fr;
@@ -216,64 +198,48 @@
             .sidebar {
                 position: relative;
                 top: 0;
-                margin-bottom: 20px;
             }
             .card {
                 padding: 20px;
             }
-        }
-
-        /* 加载状态样式 */
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #6b7280;
-            font-size: 0.9rem;
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- 修复原 <sidebar> 自定义标签（非标准），改为 div + class -->
+        <!-- 左侧：个人信息 + 关于我 + 工作经历 -->
         <div class="sidebar">
             <div class="profile-img"></div>
             <h1 class="name">张三</h1>
-            <div class="tag">前端开发工程师 / 独立开发者</div>
+            <div class="tag">前端开发工程师</div>
+
             <ul class="info-list">
                 <li><span>📍 城市</span><span>北京</span></li>
-                <li><span>📧 邮箱</span><span>zhangsan@example.com</span></li>
-                <li><span>🌐 独立域名</span><span><a href="#">mysite.com</a></span></li>
-                <!-- 可扩展：增加更多联系方式 -->
+                <li><span>📧 邮箱</span><span>test@example.com</span></li>
                 <li><span>💻 GitHub</span><span><a href="https://github.com/weishuai168" target="_blank">weishuai168</a></span></li>
             </ul>
+
+            <!-- 关于我（移到左侧 + 可点击跳转） -->
+            <div class="sidebar-title">👉 关于我</div>
+            <div class="sidebar-desc">
+                热爱前端、热爱开源，专注 Web 开发与技术分享。
+            </div>
+            <a href="about.html" style="color:var(--primary-color);font-size:14px;">查看完整介绍 →</a>
+
+            <!-- 工作经历（移到左侧 + 可点击跳转） -->
+            <div class="sidebar-title" style="margin-top:25px;">👉 工作经历</div>
+            <div class="sidebar-job">
+                高级前端工程师 | 3年前端开发经验
+            </div>
+            <a href="work.html" style="color:var(--primary-color);font-size:14px;">查看完整履历 →</a>
         </div>
 
+        <!-- 右侧：只保留 文章列表（移到顶部） -->
         <main>
-            <section class="card">
-                <h2>关于我</h2>
-                <p>热爱开源技术，专注于构建高效、用户体验良好的 Web 应用。喜欢在工作之余写技术博客，分享日常踩坑记录与技术心得。</p>
-                <p style="margin-top: 10px;">擅长技术栈：HTML5/CSS3/JavaScript、React、Vue、Webpack、Vite、移动端适配、前端性能优化。</p>
-            </section>
-
-            <section class="card">
-                <h2>工作经历</h2>
-                <div class="timeline-item">
-                    <div class="time">2024 - 至今</div>
-                    <h3>高级前端工程师 @ 某科技公司</h3>
-                    <p>负责核心业务线前端架构设计与性能优化，提升页面加载速度 40%；主导前端工程化改造，落地组件库与自动化部署流程，减少 30% 重复开发工作量。</p>
-                </div>
-                <div class="timeline-item">
-                    <div class="time">2022 - 2024</div>
-                    <h3>前端开发工程师 @ 某互联网企业</h3>
-                    <p>参与混合 App 开发与 H5 活动页基础设施建设；独立完成 10+ 核心营销活动页开发，支撑千万级流量活动，页面兼容性覆盖 99% 移动端设备。</p>
-                </div>
-            </section>
-
             <section class="card">
                 <h2>近期文章</h2>
                 <ul class="post-list" id="post-container">
-                    <!-- 加载占位 -->
                     <li class="loading">正在加载文章列表...</li>
                 </ul>
             </section>
@@ -281,58 +247,40 @@
     </div>
 
     <script>
-        // 动态获取 GitHub Issues 博客文章
-        const GITHUB_USERNAME = 'weishuai168'; // 替换为你的 GitHub 用户名
-        const REPO_NAME = 'blog'; // 替换为你的仓库名
+        // GitHub 信息（改成你自己的）
+        const GITHUB_USERNAME = 'weishuai168';
+        const REPO_NAME = 'blog';
 
         async function fetchPosts() {
             const container = document.getElementById('post-container');
             try {
-                // 添加请求头，避免 GitHub API 限流
                 const response = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/issues?state=open`, {
-                    headers: {
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
                 });
 
                 if (!response.ok) throw new Error('请求失败');
                 const issues = await response.json();
 
-                if (issues.length > 0) {
-                    container.innerHTML = ''; // 清空加载占位
-                    issues.forEach(issue => {
-                        // 过滤掉 PR，只保留纯 Issues
-                        if (!issue.pull_request) {
-                            const date = new Date(issue.created_at).toISOString().split('T')[0];
-                            const li = document.createElement('li');
-                            li.className = 'post-item';
-                            li.innerHTML = `
-                                <div class="time">${date}</div>
-                                <a href="post.html?id=${issue.number}" class="post-title">${issue.title}</a>
-                            `;
-                            container.appendChild(li);
-                        }
-                    });
-                } else {
-                    container.innerHTML = '<li class="loading">暂无公开文章</li>';
-                }
+                container.innerHTML = '';
+                issues.forEach(issue => {
+                    if (!issue.pull_request) {
+                        const date = new Date(issue.created_at).toISOString().split('T')[0];
+                        const li = document.createElement('li');
+                        li.className = 'post-item';
+                        // 跳转到独立文章页
+                        li.innerHTML = `
+                            <div class="time">${date}</div>
+                            <a href="post.html?id=${issue.number}" class="post-title">${issue.title}</a>
+                        `;
+                        container.appendChild(li);
+                    }
+                });
             } catch (error) {
-                console.error('获取文章失败：', error);
-                // 加载失败时显示默认文章
-                container.innerHTML = `
-                    <li class="post-item">
-                        <div class="time">2026-06-01</div>
-                        <a href="#" class="post-title">如何利用 GitHub Issues 作为免费博客后台</a>
-                    </li>
-                    <li class="post-item">
-                        <div class="time">2026-05-15</div>
-                        <a href="#" class="post-title">2026 年前端性能优化新趋势</a>
-                    </li>
-                `;
+                console.error(error);
+                container.innerHTML = '<li class="loading">文章加载失败</li>';
             }
         }
-        
-        // 页面加载完成后执行
+
         window.addEventListener('DOMContentLoaded', fetchPosts);
     </script>
 </body>
