@@ -70,65 +70,77 @@
             line-height: 1.8;
         }
 
-        .content p {
-            margin-bottom: 18px;
+        .loading {
+            text-align: center;
+            padding: 50px 0;
+            color: #6b7280;
         }
     </style>
+    <!-- 引入 Markdown 解析库，把 GitHub 的 Issue 内容转成网页格式 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
-
     <div class="container">
         <div class="card">
             <div class="back">
                 <a href="index.html">← 返回主页</a>
             </div>
-            <h1 class="title" id="title">文章标题加载中...</h1>
+            <h1 class="title" id="title">文章加载中...</h1>
             <div class="date" id="date"></div>
-            <div class="content" id="content"></div>
+            <div class="content" id="content">
+                <div class="loading">正在加载文章内容...</div>
+            </div>
         </div>
     </div>
 
     <script>
-        // 文章数据（和主页保持一致）
-        const posts = [
-            {
-                id: 1,
-                title: "如何利用 GitHub Issues 做免费博客",
-                date: "2026-06-01",
-                content: `
-<p>大家好，今天给大家分享一个零成本搭建博客的方法。</p>
-<p>我们可以直接用 GitHub Issues 写文章，不用服务器、不用数据库，非常适合个人简历网站使用。</p>
-<p>优点：免费、稳定、支持 Markdown、自动同步。</p>
-`
-            },
-            {
-                id: 2,
-                title: "2026 前端性能优化实战总结",
-                date: "2026-05-15",
-                content: `
-<p>前端性能直接影响用户体验，我总结了几个最有效的优化方案：</p>
-<p>1. 图片压缩与懒加载</p>
-<p>2. CSS/JS 压缩</p>
-<p>3. 减少请求数</p>
-<p>4. 使用缓存策略</p>
-`
-            }
-        ];
+        // 这里改成你自己的 GitHub 信息，和主页保持一致！
+        const GITHUB_USERNAME = 'weishuai168';
+        const REPO_NAME = 'blog';
 
-        // 获取文章ID
+        // 获取 URL 里的文章ID
         const urlParams = new URLSearchParams(window.location.search);
-        const postId = urlParams.get('id');
+        const issueId = urlParams.get('id');
 
-        // 找到对应文章
-        const post = posts.find(item => item.id == postId);
-
-        if (post) {
-            document.getElementById("title").innerText = post.title;
-            document.getElementById("date").innerText = post.date;
-            document.getElementById("content").innerHTML = post.content;
-        } else {
+        if (!issueId) {
+            // 没有ID，直接显示错误
             document.getElementById("title").innerText = "文章不存在";
-            document.getElementById("content").innerHTML = "<p>返回主页查看其他文章</p>";
+            document.getElementById("content").innerHTML = "<p>请从主页点击文章进入，或<a href='index.html'>返回主页</a></p>";
+        } else {
+            // 去 GitHub 拉取对应的 Issue 数据
+            async function loadArticle() {
+                try {
+                    const response = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/issues/${issueId}`, {
+                        headers: {
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+
+                    if (!response.ok) throw new Error('请求失败');
+                    const issue = await response.json();
+
+                    // 解析数据并渲染到页面
+                    const date = new Date(issue.created_at).toISOString().split('T')[0];
+                    document.getElementById("title").innerText = issue.title;
+                    document.getElementById("date").innerText = `发布于：${date}`;
+                    // 把 Markdown 内容转成 HTML
+                    document.getElementById("content").innerHTML = marked.parse(issue.body || "暂无内容");
+                } catch (error) {
+                    console.error('加载文章失败：', error);
+                    document.getElementById("title").innerText = "文章加载失败";
+                    document.getElementById("content").innerHTML = `
+                        <p>无法加载文章内容，可能是：</p>
+                        <ul>
+                            <li>网络连接问题</li>
+                            <li>文章ID错误</li>
+                            <li>GitHub API 请求被限流</li>
+                        </ul>
+                        <p><a href='index.html'>返回主页查看其他文章</a></p>
+                    `;
+                }
+            }
+
+            loadArticle();
         }
     </script>
 </body>
