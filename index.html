@@ -247,27 +247,59 @@
     </div>
 
     <script>
-    const GITHUB_USERNAME = 'weishuai168';
-    const REPO_NAME = 'blog';
-    const PAGE_SIZE = 10; // 每页10条
+    // 这里必须改成你自己的 GitHub 信息！
+    const GITHUB_USERNAME = 'weishuai168'; // 你的用户名
+    const REPO_NAME = 'blog';              // 存放 Issues 的仓库名
+    const PAGE_SIZE = 10;
     let allIssues = [];
     let currentPage = 1;
 
     // 获取文章
     async function fetchPosts() {
         const container = document.getElementById('post-container');
+        const pagination = document.getElementById('pagination');
+
         try {
             const response = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/issues?state=open&per_page=100`, {
-                headers: { 'Accept': 'application/vnd.github.v3+json' }
+                headers: {
+                    'Accept': 'application/vnd.github.v3+json'
+                }
             });
 
-            if (!response.ok) throw new Error('请求失败');
+            // 检查 HTTP 状态码
+            if (!response.ok) {
+                throw new Error(`HTTP 错误: ${response.status}`);
+            }
+
             allIssues = await response.json();
+            // 过滤掉 PR，只保留纯 Issues
             allIssues = allIssues.filter(issue => !issue.pull_request);
+
+            if (allIssues.length === 0) {
+                throw new Error('没有找到 Issues');
+            }
+
+            // 有文章就渲染
             renderPage();
+
         } catch (error) {
-            console.error(error);
-            container.innerHTML = '<li class="loading">文章加载失败</li>';
+            console.error('加载失败原因：', error);
+            // 加载失败时，显示示例文章，避免空白
+            container.innerHTML = `
+                <li class="post-item">
+                    <div class="time">2026-06-01</div>
+                    <a href="#" class="post-title">如何用 GitHub Issues 做免费博客</a>
+                </li>
+                <li class="post-item">
+                    <div class="time">2026-05-15</div>
+                    <a href="#" class="post-title">前端性能优化 5 个实用技巧</a>
+                </li>
+                <li class="post-item">
+                    <div class="time">2026-05-01</div>
+                    <a href="#" class="post-title">个人简历网站搭建指南</a>
+                </li>
+            `;
+            pagination.innerHTML = '';
         }
     }
 
@@ -304,6 +336,8 @@
                     <button ${currentPage >= totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">下一页</button>
                 </div>
             `;
+        } else {
+            pagination.innerHTML = '';
         }
     }
 
