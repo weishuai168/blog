@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>个人简历 & 博客</title>
+    <title>laowei</title>
     <style>
         /* 全局样式 */
         :root {
@@ -189,6 +189,45 @@
             font-size: 0.9rem;
         }
 
+        /* 分页样式 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .pagination-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .pagination-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .pagination-btn:disabled {
+            background: var(--bg-color);
+            color: #9ca3af;
+            cursor: not-allowed;
+            border-color: var(--border-color);
+        }
+
+        .pagination-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
         /* 响应式 */
         @media (max-width: 768px) {
             .container {
@@ -242,92 +281,117 @@
                 <ul class="post-list" id="post-container">
                     <li class="loading">正在加载文章列表...</li>
                 </ul>
+                <!-- 分页容器 -->
+                <div class="pagination" id="pagination-container"></div>
             </section>
         </main>
     </div>
 
     <script>
-    // ↓↓↓ 这里确认是你的账号和仓库 ↓↓↓
-    const GITHUB_USERNAME = 'weishuai168';
-    const REPO_NAME = 'blog';
-    const PAGE_SIZE = 10;
+        // GitHub 信息（改成你自己的）
+        const GITHUB_USERNAME = 'weishuai168';
+        const REPO_NAME = 'blog';
+        // 分页配置
+        const PAGE_SIZE = 10; // 每页显示数量
+        let currentPage = 1; // 当前页
+        let totalPages = 1;  // 总页数
+        let allIssues = [];   // 所有文章数据
 
-    let allIssues = [];
-    let currentPage = 1;
-
-    async function fetchPosts() {
-        const container = document.getElementById('post-container');
-        const pagination = document.getElementById('pagination');
-
-        container.innerHTML = '<li class="loading">正在加载文章...</li>';
-        pagination.innerHTML = '';
-
-        try {
-            const res = await fetch(
-                `https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/issues?state=open&per_page=100`,
-                { headers: { Accept: 'application/vnd.github.v3+json' } }
-            );
-
-            if (!res.ok) throw new Error('API 异常');
-
-            allIssues = await res.json();
-            // 只保留真正的 issue，过滤掉 PR
-            allIssues = allIssues.filter(issue => !issue.pull_request);
-
-            if (allIssues.length === 0) {
+        // 渲染文章列表
+        function renderPosts(posts) {
+            const container = document.getElementById('post-container');
+            if (posts.length === 0) {
                 container.innerHTML = '<li class="loading">暂无文章</li>';
                 return;
             }
-
-            renderPage();
-
-        } catch (err) {
-            console.error(err);
-            container.innerHTML = '<li class="loading">文章加载失败，请稍后再试</li>';
+            container.innerHTML = '';
+            posts.forEach(issue => {
+                const date = new Date(issue.created_at).toISOString().split('T')[0];
+                const li = document.createElement('li');
+                li.className = 'post-item';
+                // 跳转到独立文章页
+                li.innerHTML = `
+                    <div class="time">${date}</div>
+                    <a href="post.html?id=${issue.number}" class="post-title">${issue.title}</a>
+                `;
+                container.appendChild(li);
+            });
         }
-    }
 
-    function renderPage() {
-        const container = document.getElementById('post-container');
-        const pagination = document.getElementById('pagination');
-        const totalPages = Math.ceil(allIssues.length / PAGE_SIZE);
+        // 渲染分页控件
+        function renderPagination() {
+            const paginationContainer = document.getElementById('pagination-container');
+            paginationContainer.innerHTML = '';
 
-        const start = (currentPage - 1) * PAGE_SIZE;
-        const end = start + PAGE_SIZE;
-        const items = allIssues.slice(start, end);
+            // 上一页按钮
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'pagination-btn';
+            prevBtn.textContent = '上一页';
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.onclick = () => changePage(currentPage - 1);
+            paginationContainer.appendChild(prevBtn);
 
-        container.innerHTML = '';
-        items.forEach(issue => {
-            const date = issue.created_at.split('T')[0];
-            const li = document.createElement('li');
-            li.className = 'post-item';
-            li.innerHTML = `
-                <div class="time">${date}</div>
-                <a href="post.html?id=${issue.number}" class="post-title">${issue.title}</a>
-            `;
-            container.appendChild(li);
-        });
+            // 页码按钮（只显示当前页前后2个页码，避免页码过多）
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
+                pageBtn.textContent = i;
+                pageBtn.onclick = () => changePage(i);
+                paginationContainer.appendChild(pageBtn);
+            }
 
-        if (totalPages > 1) {
-            pagination.innerHTML = `
-                <div class="pagination">
-                    <button ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage-1})">上一页</button>
-                    <span>第 ${currentPage} / ${totalPages} 页</span>
-                    <button ${currentPage >= totalPages ? 'disabled' : ''} onclick="changePage(${currentPage+1})">下一页</button>
-                </div>
-            `;
-        } else {
-            pagination.innerHTML = '';
+            // 下一页按钮
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'pagination-btn';
+            nextBtn.textContent = '下一页';
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.onclick = () => changePage(currentPage + 1);
+            paginationContainer.appendChild(nextBtn);
         }
-    }
 
-    function changePage(page) {
-        currentPage = page;
-        renderPage();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+        // 切换页码
+        function changePage(page) {
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            // 计算当前页要显示的文章
+            const startIndex = (currentPage - 1) * PAGE_SIZE;
+            const endIndex = startIndex + PAGE_SIZE;
+            const currentPosts = allIssues.slice(startIndex, endIndex);
+            // 重新渲染列表和分页
+            renderPosts(currentPosts);
+            renderPagination();
+            // 滚动到文章列表顶部
+            document.getElementById('post-container').scrollIntoView({ behavior: 'smooth' });
+        }
 
-    window.addEventListener('DOMContentLoaded', fetchPosts);
-</script>
+        // 获取所有文章数据
+        async function fetchAllPosts() {
+            const container = document.getElementById('post-container');
+            try {
+                // 注意：GitHub API 默认最多返回30条，添加per_page=100获取更多（最大100）
+                // 如果文章超过100条，需要循环请求page参数，这里简化处理
+                const response = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/issues?state=open&per_page=100`, {
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
+                });
+
+                if (!response.ok) throw new Error(`请求失败：${response.status}`);
+                const issues = await response.json();
+                // 过滤掉PR，只保留普通issue（文章）
+                allIssues = issues.filter(issue => !issue.pull_request);
+                // 计算总页数
+                totalPages = Math.ceil(allIssues.length / PAGE_SIZE);
+                // 渲染第一页
+                changePage(1);
+            } catch (error) {
+                console.error('加载文章失败：', error);
+                container.innerHTML = `<li class="loading">文章加载失败：${error.message}</li>`;
+            }
+        }
+
+        // 页面加载完成后初始化
+        window.addEventListener('DOMContentLoaded', fetchAllPosts);
+    </script>
 </body>
 </html>
