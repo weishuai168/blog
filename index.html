@@ -226,7 +226,7 @@
                 
                 if(issues.length > 0) {
                     container.innerHTML = ''; // 清空原本的静态占位内容
-                    议题.forEach(issue => {
+                    issues.forEach(issue => {
                         // 过滤失误：只展示你自己发的，排除掉别人的 comment 或 pull requests
                         if (!issue.pull_request) {
                             const date = new Date(issue.created_at).toISOString().split('T')[0];
