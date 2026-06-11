@@ -1,10 +1,8 @@
 name: Generate Blog from GitHub Issues
 
 on:
-  push:
-    branches: [main]
-    paths-ignore:
-      - '.github/workflows/generate-blog.yml'
+  issues:
+    types: [opened, edited, reopened]
   schedule:
     - cron: '0 */6 * * *'
   workflow_dispatch:
@@ -15,9 +13,15 @@ permissions:
   pages: write
   id-token: write
 
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   build:
+    name: Generate blog
     runs-on: ubuntu-latest
+    if: ${{ github.event.repository.owner.id == github.event.sender.id || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -43,6 +47,14 @@ jobs:
         with:
           path: .
 
+  deploy:
+    name: Deploy blog
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
