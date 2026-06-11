@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { marked } = require('marked');
+const { marked } = require('marked')
 const OWNER = 'weishuai168';
 const REPO = 'blog';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
@@ -291,29 +291,32 @@ function genPostPage(article, allArticles) {
   ].join('\n');
 }
 function genSitemap(articles) {
-  var base = 'https://' + OWNER + '.github.io/' + REPO;
-  var urls = [];
-  urls.push(
-    '  <url>\n' +
-    '    <loc>' + base + '/index.html</loc>\n' +
-    '    <changefreq>daily</changefreq>\n' +
-    '    <priority>1.0</priority>\n' +
-    '  </url>'
-  );
+  const base = 'https://' + OWNER + '.github.io/' + REPO;
+  const urls = [];
+  // 首页节点（完整闭合）
+  urls.push(`
+  <url>
+    <loc>${base}/index.html</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>`);
+
+  // 文章节点：补上 </url> 闭合标签
   articles.forEach(function(a) {
-    var lastmod = new Date(a.date).toISOString().split('T')[0];
-    urls.push(
-      '  <url>\n' +
-      '    <loc>' + base + '/posts/post-' + a.id + '.html</loc>\n' +
-      '    <lastmod>' + lastmod + '</lastmod>\n' +
-      '    <changefreq>monthly</changefreq>\n' +
-      '    <priority>0.8</priority>\n'
-    );
+    const lastmod = new Date(a.date).toISOString().split('T')[0];
+    urls.push(`
+  <url>
+    <loc>${base}/posts/post-${a.id}.html</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>`);
   });
-  return '<?xml version="1.0" encoding="UTF-8"?>\n' +
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
-    urls.join('\n') + '\n' +
-    '</urlset>';
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.join('\n')}
+</urlset>`;
 }
 async function main() {
   console.log('🚀 开始从 GitHub Issues 生成博客...');
