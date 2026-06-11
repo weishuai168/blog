@@ -1,19 +1,15 @@
 const fs = require('fs');
 const path = require('path');
 const { marked } = require('marked');
-
 const OWNER = 'weishuai168';
 const REPO = 'blog';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const POST_DIR = 'posts';
-
 marked.setOptions({ gfm: true, breaks: true });
-
 // 创建 posts 目录
 if (!fs.existsSync(path.join(__dirname, POST_DIR))) {
     fs.mkdirSync(path.join(__dirname, POST_DIR));
 }
-
 async function fetchIssues() {
   const headers = { 'Accept': 'application/vnd.github.v3+json' };
   if (GITHUB_TOKEN) headers['Authorization'] = 'token ' + GITHUB_TOKEN;
@@ -31,29 +27,44 @@ async function fetchIssues() {
   }
   return allIssues;
 }
-
+// ========== 修复后的摘要处理函数 ==========
 function getExcerpt(body, maxLength) {
   if (!body) return '';
   maxLength = maxLength || 120;
   var text = body
+    // 移除多行代码块
     .replace(/```[\s\S]*?```/g, '[code]')
+    // 移除行内代码
     .replace(/`([^`]+)`/g, '$1')
+    // 移除 Markdown 标题
     .replace(/#{1,6}\s*/g, '')
+    // 移除加粗语法
     .replace(/\*\*([^*]+)\*\*/g, '$1')
+    // 移除斜体语法
     .replace(/\*([^*]+)\*/g, '$1')
+    // 移除 Markdown 图片语法 ![alt](url)
     .replace(/!\[.*?\]\(.*?\)/g, '')
+    // 【新增】全局过滤所有 HTML <img> 标签（兼容所有写法、大小写、属性）
+    .replace(/<img\s*[^>]*?(\/>|>.*?<\/img>)/gi, '')
+    // 移除 Markdown 链接 [text](url)
     .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
+    // 移除列表标记
     .replace(/[-*]\s/g, '')
+    // 换行转为单个空格
     .replace(/\n+/g, ' ')
     .trim();
-  if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength) + '...';
-}
 
+  // 截取指定长度
+  if (text.length <= maxLength) {
+    // 【核心修复】最终输出前执行HTML转义，禁止标签解析
+    return escapeHtml(text);
+  }
+  // 截取并转义
+  return escapeHtml(text.slice(0, maxLength)) + '...';
+}
 function escapeHtml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
-
 function getFirstImage(body) {
   if (!body) return '';
   var match = body.match(/!\[.*?\]\((.*?)\)/);
@@ -62,7 +73,6 @@ function getFirstImage(body) {
   if (htmlMatch) return htmlMatch[1];
   return '';
 }
-
 function buildArticleData(issue) {
   return {
     id: issue.number,
@@ -77,7 +87,6 @@ function buildArticleData(issue) {
     htmlUrl: issue.html_url,
   };
 }
-
 function genSharedStyle() {
   return [
     ':root{--primary-color:#2563eb;--text-color:#1f2937;--bg-color:#f3f4f6;--card-bg:#ffffff;--border-color:#e5e7eb;--meta-color:#6b7280;--tag-bg:rgba(37,99,235,0.1);--tag-color:#2563eb;--hover-bg:rgba(37,99,235,0.05);--search-bg:#f9fafb;--shadow:0 4px 6px -1px rgba(0,0,0,0.1)}',
@@ -116,7 +125,7 @@ function genSharedStyle() {
     '.post-thumb-link{flex-shrink:0;width:80px;height:80px;overflow:hidden;border-radius:8px;display:block;margin-top:4px}',
     '.post-thumb{width:80px;height:80px;object-fit:cover;display:block}',
     '.post-body{flex:1;min-width:0}',
-    '.post-meta{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}',
+    '.post-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}',
     '.post-date{color:var(--meta-color);font-size:0.82rem}',
     '.post-tags{display:flex;gap:6px;flex-wrap:wrap}',
     '.post-tag{font-size:0.75rem;padding:2px 8px;border-radius:10px;background:var(--tag-bg);color:var(--tag-color)}',
@@ -137,7 +146,6 @@ function genSharedStyle() {
     '@media(max-width:768px){.container{grid-template-columns:1fr}.sidebar{position:static}.profile-img{width:80px;height:80px}.card{padding:20px}}'
   ].join('');
 }
-
 function genPostStyle() {
   return genSharedStyle() + [
     '.container{max-width:820px;display:block;padding:30px 20px}',
@@ -164,13 +172,11 @@ function genPostStyle() {
     '.nav-next{text-align:right}'
   ].join('');
 }
-
 function genIndex(articles) {
   var articlesJson = JSON.stringify(articles.map(function(a) {
     return { id: a.id, title: a.title, date: a.dateFormatted, excerpt: a.excerpt, tags: a.tags, tagsHtml: a.tagsHtml, thumb: a.thumb, url: POST_DIR + '/post-' + a.id + '.html' };
   }));
   var style = genSharedStyle();
-
   return [
     '<!DOCTYPE html>',
     '<html lang="zh-CN">',
@@ -222,7 +228,7 @@ function genIndex(articles) {
     '        function renderPosts(posts){var c=document.getElementById("post-container");if(posts.length===0){c.innerHTML=\'<li class="no-results">没有找到匹配的文章</li>\';return;}var html="";posts.forEach(function(a){html+=\'<li class="post-item"><div class="post-item-inner">\';if(a.thumb)html+=\'<a href="\'+a.url+\'" class="post-thumb-link"><img class="post-thumb" src="\'+a.thumb+\'" alt="" loading="lazy" onerror="this.parentElement.style.display=&quot;none&quot;"></a>\';html+=\'<div class="post-body"><div class="post-meta"><span class="post-date">\'+a.date+\'</span>\';if(a.tagsHtml)html+=\'<div class="post-tags">\'+a.tagsHtml+\'</div>\';html+=\'</div>\';html+=\'<a href="\'+a.url+\'" class="post-title-link">\'+a.title+\'</a>\';if(a.excerpt)html+=\'<div class="post-excerpt">\'+a.excerpt+\'</div>\';html+=\'</div></div></li>\';});c.innerHTML=html;}',
     '        function renderTagFilter(){var tagSet=new Set();ARTICLES.forEach(function(a){a.tags.forEach(function(t){tagSet.add(t);});});var tags=Array.from(tagSet).sort();var html=\'<button class="tag-filter-btn \'+(activeTag===""?"active":"")+\'" data-tag="">全部</button>\';tags.forEach(function(t){html+=\'<button class="tag-filter-btn \'+(activeTag===t?"active":"")+\'" data-tag="\'+t+\'">\'+t+\'</button>\';});document.getElementById("tag-filter").innerHTML=html;document.querySelectorAll(".tag-filter-btn").forEach(function(btn){btn.addEventListener("click",function(){activeTag=btn.dataset.tag;applyFilters();});});}',
     '        function applyFilters(){var issues=ARTICLES.slice();if(activeTag)issues=issues.filter(function(a){return a.tags.indexOf(activeTag)>=0;});if(searchQuery){var q=searchQuery.toLowerCase();issues=issues.filter(function(a){return(a.title||"").toLowerCase().indexOf(q)>=0||(a.excerpt||"").toLowerCase().indexOf(q)>=0;});}filteredArticles=issues;totalPages=Math.ceil(issues.length/PAGE_SIZE);if(currentPage>totalPages)currentPage=Math.max(1,totalPages);changePage(currentPage);}',
-    '        function renderPagination(){var c=document.getElementById("pagination-container");c.innerHTML="";if(totalPages<=1)return;var pb=document.createElement("button");pb.className="pagination-btn";pb.textContent="← 上一页";pb.disabled=currentPage===1;pb.onclick=function(){changePage(currentPage-1);};c.appendChild(pb);var s=Math.max(1,currentPage-2),e=Math.min(totalPages,currentPage+2);for(var i=s;i<=e;i++){var b=document.createElement("button");b.className="pagination-btn"+(i===currentPage?" active":"");b.textContent=i;b.onclick=function(p){return function(){changePage(p);};}(i);c.appendChild(b);}var nb=document.createElement("button");nb.className="pagination-btn";nb.textContent="下一页 →";nb.disabled=currentPage===totalPages;nb.onclick=function(){changePage(currentPage+1);};c.appendChild(nb);}',
+    '        function renderPagination(){var c=document.getElementById("pagination-container");c.innerHTML="";if(totalPages<=1)return;var pb=document.createElement("button");pb.textContent="← 上一页";pb.disabled=currentPage===1;pb.className="pagination-btn";pb.onclick=function(){changePage(currentPage-1);};c.appendChild(pb);var s=Math.max(1,currentPage-2),e=Math.min(totalPages,currentPage+2);for(var i=s;i<=e;i++){var b=document.createElement("button");b.className="pagination-btn"+(i===currentPage?" active":"");b.textContent=i;b.onclick=function(p){return function(){changePage(p);};}(i);c.appendChild(b);}var nb=document.createElement("button");nb.className="pagination-btn";nb.textContent="下一页 →";nb.disabled=currentPage===totalPages;nb.onclick=function(){changePage(currentPage+1);};c.appendChild(nb);}',
     '        function changePage(page){if(page<1||page>totalPages)return;currentPage=page;var start=(currentPage-1)*PAGE_SIZE;renderPosts(filteredArticles.slice(start,start+PAGE_SIZE));renderPagination();document.getElementById("post-container").scrollIntoView({behavior:"smooth"});}',
     '        document.getElementById("search-input").addEventListener("input",function(e){searchQuery=e.target.value.trim();currentPage=1;applyFilters();});',
     '        renderTagFilter();applyFilters();',
@@ -231,23 +237,19 @@ function genIndex(articles) {
     '</html>'
   ].join('\n');
 }
-
 function genPostPage(article, allArticles) {
   var idx = -1;
   for (var i = 0; i < allArticles.length; i++) { if (allArticles[i].id === article.id) { idx = i; break; } }
   var prev = allArticles[idx + 1] || null;
   var next = allArticles[idx - 1] || null;
-
   var prevHtml, nextHtml;
   if (prev) { prevHtml = '<a href="post-' + prev.id + '.html" class="nav-item nav-prev"><div class="nav-label">← 上一篇</div><div class="nav-title">' + prev.title + '</div></a>'; }
   else { prevHtml = '<div class="nav-item nav-prev"><div class="nav-label">← 上一篇</div><div class="nav-title">没有了</div></div>'; }
   if (next) { nextHtml = '<a href="post-' + next.id + '.html" class="nav-item nav-next"><div class="nav-label">下一篇 →</div><div class="nav-title">' + next.title + '</div></a>'; }
   else { nextHtml = '<div class="nav-item nav-next"><div class="nav-label">下一篇 →</div><div class="nav-title">没有了</div></div>'; }
-
   var style = genPostStyle();
   var metaDesc = article.excerpt.replace(/"/g, '&quot;');
   var ogTitle = article.title.replace(/"/g, '&quot;');
-
   return [
     '<!DOCTYPE html>',
     '<html lang="zh-CN">',
@@ -282,13 +284,12 @@ function genPostPage(article, allArticles) {
     '    <button class="theme-toggle" id="theme-toggle" title="切换深色/浅色模式">🌙</button>',
     '    <script>',
     '        (function(){var s=localStorage.getItem("blog_theme");if(s==="dark"||(!s&&window.matchMedia("(prefers-color-scheme:dark)").matches)){document.body.classList.add("dark");document.getElementById("theme-toggle").textContent="☀️";}})();',
-    '        document.getElementById("theme-toggle").addEventListener("click",function(){document.body.classList.toggle("dark");document.getElementById("theme-toggle").textContent=document.body.classList.contains("dark")?"☀️":"🌙";localStorage.setItem("blog_theme",document.body.classList.contains("dark")?"dark":"light");});',
+    '        document.getElementById("theme-toggle").addEventListener("click",function(){document.body.classList.toggle("dark");document.getElementById("theme-toggle").textContent=document.body.classList.contains("dark")?"dark":"light";localStorage.setItem("blog_theme",document.body.classList.contains("dark")?"dark":"light");});',
     '    <\/script>',
     '</body>',
     '</html>'
   ].join('\n');
 }
-
 function genSitemap(articles) {
   var base = 'https://' + OWNER + '.github.io/' + REPO;
   var urls = [];
@@ -306,8 +307,7 @@ function genSitemap(articles) {
       '    <loc>' + base + '/posts/post-' + a.id + '.html</loc>\n' +
       '    <lastmod>' + lastmod + '</lastmod>\n' +
       '    <changefreq>monthly</changefreq>\n' +
-      '    <priority>0.8</priority>\n' +
-      '  </url>'
+      '    <priority>0.8</priority>\n'
     );
   });
   return '<?xml version="1.0" encoding="UTF-8"?>\n' +
@@ -315,7 +315,6 @@ function genSitemap(articles) {
     urls.join('\n') + '\n' +
     '</urlset>';
 }
-
 async function main() {
   console.log('🚀 开始从 GitHub Issues 生成博客...');
   var issues;
@@ -326,14 +325,11 @@ async function main() {
     process.exit(1);
   }
   console.log('📦 获取到 ' + issues.length + ' 篇 Issues');
-
   var articles = issues.map(buildArticleData);
   articles.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
-
   // 生成 index.html
   fs.writeFileSync(path.join(__dirname, 'index.html'), genIndex(articles));
   console.log('✅ index.html 已生成');
-
   // 清理旧的 posts 目录
   var postsDir = path.join(__dirname, POST_DIR);
   if (fs.existsSync(postsDir)) {
@@ -342,7 +338,6 @@ async function main() {
     });
     fs.rmdirSync(postsDir);
   }
-
   // 生成文章页
   var count = 0;
   articles.forEach(function(a) {
@@ -354,12 +349,9 @@ async function main() {
     count++;
   });
   console.log('✅ 生成了 ' + count + ' 篇文章页到 ' + POST_DIR + '/ 目录');
-
   // 生成 sitemap.xml
   fs.writeFileSync(path.join(__dirname, 'sitemap.xml'), genSitemap(articles));
   console.log('✅ sitemap.xml 已生成');
-
   console.log('🎉 博客生成完成！');
 }
-
 main();
