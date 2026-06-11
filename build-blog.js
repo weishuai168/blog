@@ -5,8 +5,14 @@ const { marked } = require('marked');
 const OWNER = 'weishuai168';
 const REPO = 'blog';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const POST_DIR = 'posts';
 
 marked.setOptions({ gfm: true, breaks: true });
+
+// 创建 posts 目录
+if (!fs.existsSync(path.join(__dirname, POST_DIR))) {
+    fs.mkdirSync(path.join(__dirname, POST_DIR));
+}
 
 async function fetchIssues() {
   const headers = { 'Accept': 'application/vnd.github.v3+json' };
@@ -31,12 +37,12 @@ function getExcerpt(body, maxLength) {
   maxLength = maxLength || 120;
   var text = body
     .replace(/```[\s\S]*?```/g, '[code]')
-    .replace(/`([^`]+)`/g, '\$1')
+    .replace(/`([^`]+)`/g, '$1')
     .replace(/#{1,6}\s*/g, '')
-    .replace(/\*\*([^*]+)\*\*/g, '\$1')
-    .replace(/\*([^*]+)\*/g, '\$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
     .replace(/!\[.*?\]\(.*?\)/g, '')
-    .replace(/\[([^\]]+)\]\([^\)]+\)/g, '\$1')
+    .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
     .replace(/[-*]\s/g, '')
     .replace(/\n+/g, ' ')
     .trim();
@@ -146,7 +152,7 @@ function genPostStyle() {
 
 function genIndex(articles) {
   var articlesJson = JSON.stringify(articles.map(function(a) {
-    return { id: a.id, title: a.title, date: a.dateFormatted, excerpt: a.excerpt, tagsHtml: a.tagsHtml, url: 'post-' + a.id + '.html' };
+    return { id: a.id, title: a.title, date: a.dateFormatted, excerpt: a.excerpt, tagsHtml: a.tagsHtml, url: POST_DIR + '/post-' + a.id + '.html' };
   }));
   var style = genSharedStyle();
 
@@ -194,8 +200,8 @@ function genIndex(articles) {
     '        document.getElementById("theme-toggle").addEventListener("click",function(){document.body.classList.toggle("dark");document.getElementById("theme-toggle").textContent=document.body.classList.contains("dark")?"☀️":"🌙";localStorage.setItem("blog_theme",document.body.classList.contains("dark")?"dark":"light");});',
     '        window.addEventListener("scroll",function(){document.getElementById("back-to-top").classList.toggle("visible",window.scrollY>300);});',
     '        document.getElementById("back-to-top").addEventListener("click",function(){window.scrollTo({top:0,behavior:"smooth"});});',
-    '        function renderPosts(posts){var c=document.getElementById("post-container");if(posts.length===0){c.innerHTML=\'<li class="no-results">没有找到匹配的文章</li>\';return;}var html="";posts.forEach(function(a){html+=\'<li class="post-item"><div class="post-meta"><span class="post-date\'+a.date+\'</span>\';if(a.tagsHtml)html+=\'<div class="post-tags\'+a.tagsHtml+\'</div>\';html+=\'</div>\';html+=\'<a href="\'+a.url+\'" class="post-title-link">\'+a.title+\'</a>\';if(a.excerpt)html+=\'<div class="post-excerpt">\'+a.excerpt+\'</div>\';html+=\'</li>\';});c.innerHTML=html;}',
-    '        function renderTagFilter(){var tagSet=new Set();ARTICLES.forEach(function(a){a.tags.forEach(function(t){tagSet.add(t);});});var tags=Array.from(tagSet).sort();var html=\'<button class="tag-filter-btn \'+(activeTag===""?"active":"")+\'" data-tag="">全部</button>\';tags.forEach(function(t){html+=\'<button class="tag-filter-btn \'+(activeTag===t?"active":"")+\'" data-tag="\'+t+\'">\'+t+\'</button>\';});document.getElementById("tag-filter").innerHTML=html;document.querySelectorAll(".tag-filter-btn").forEach(function(btn){btn.addEventListener("click",function(){activeTag=btn.dataset.tag;applyFilters();});});}',
+    '        function renderPosts(posts){var c=document.getElementById("post-container");if(posts.length===0){c.innerHTML=\'<li class="no-results">没有找到匹配的文章</li>\';return;}var html="";posts.forEach(function(a){html+=\'<li class="post-item"><div class="post-meta"><span class="post-date"\'+a.date+\'</span>\';if(a.tagsHtml)html+=\'<div class="post-tags"\'+a.tagsHtml+\'</div>\';html+=\'</div>\';html+=\'<a href="\'+a.url+\'" class="post-title-link"\'>\'+a.title+\'</a>\';if(a.excerpt)html+=\'<div class="post-excerpt"\'>\'+a.excerpt+\'</div>\';html+=\'</li>\';});c.innerHTML=html;}',
+    '        function renderTagFilter(){var tagSet=new Set();ARTICLES.forEach(function(a){a.tags.forEach(function(t){tagSet.add(t);});});var tags=Array.from(tagSet).sort();var html=\'<button class="tag-filter-btn \'+(activeTag===""?"active":"")+\'" data-tag="">全部</button>\';tags.forEach(function(t){html+=\'<button class="tag-filter-btn \'+(activeTag===t?"active":"")+\'" data-tag="\'+t+\'"\'>\'+t+\'</button>\';});document.getElementById("tag-filter").innerHTML=html;document.querySelectorAll(".tag-filter-btn").forEach(function(btn){btn.addEventListener("click",function(){activeTag=btn.dataset.tag;applyFilters();});});}',
     '        function applyFilters(){var issues=ARTICLES.slice();if(activeTag)issues=issues.filter(function(a){return a.tags.indexOf(activeTag)>=0;});if(searchQuery){var q=searchQuery.toLowerCase();issues=issues.filter(function(a){return(a.title||"").toLowerCase().indexOf(q)>=0||(a.excerpt||"").toLowerCase().indexOf(q)>=0;});}filteredArticles=issues;totalPages=Math.ceil(issues.length/PAGE_SIZE);if(currentPage>totalPages)currentPage=Math.max(1,totalPages);changePage(currentPage);}',
     '        function renderPagination(){var c=document.getElementById("pagination-container");c.innerHTML="";if(totalPages<=1)return;var pb=document.createElement("button");pb.className="pagination-btn";pb.textContent="← 上一页";pb.disabled=currentPage===1;pb.onclick=function(){changePage(currentPage-1);};c.appendChild(pb);var s=Math.max(1,currentPage-2),e=Math.min(totalPages,currentPage+2);for(var i=s;i<=e;i++){var b=document.createElement("button");b.className="pagination-btn"+(i===currentPage?" active":"");b.textContent=i;b.onclick=function(p){return function(){changePage(p);};}(i);c.appendChild(b);}var nb=document.createElement("button");nb.className="pagination-btn";nb.textContent="下一页 →";nb.disabled=currentPage===totalPages;nb.onclick=function(){changePage(currentPage+1);};c.appendChild(nb);}',
     '        function changePage(page){if(page<1||page>totalPages)return;currentPage=page;var start=(currentPage-1)*PAGE_SIZE;renderPosts(filteredArticles.slice(start,start+PAGE_SIZE));renderPagination();document.getElementById("post-container").scrollIntoView({behavior:"smooth"});}',
@@ -214,9 +220,9 @@ function genPostPage(article, allArticles) {
   var next = allArticles[idx - 1] || null;
 
   var prevHtml, nextHtml;
-  if (prev) { prevHtml = '<a href="'+prev.url+'" class="nav-item nav-prev"><div class="nav-label">← 上一篇</div><div class="nav-title">'+prev.title+'</div></a>'; }
+  if (prev) { prevHtml = '<a href="' + POST_DIR + '/' + prev.url + '" class="nav-item nav-prev"><div class="nav-label">← 上一篇</div><div class="nav-title">' + prev.title + '</div></a>'; }
   else { prevHtml = '<div class="nav-item nav-prev"><div class="nav-label">← 上一篇</div><div class="nav-title">没有了</div></div>'; }
-  if (next) { nextHtml = '<a href="'+next.url+'" class="nav-item nav-next"><div class="nav-label">下一篇 →</div><div class="nav-title">'+next.title+'</div></a>'; }
+  if (next) { nextHtml = '<a href="' + POST_DIR + '/' + next.url + '" class="nav-item nav-next"><div class="nav-label">下一篇 →</div><div class="nav-title">' + next.title + '</div></a>'; }
   else { nextHtml = '<div class="nav-item nav-next"><div class="nav-label">下一篇 →</div><div class="nav-title">没有了</div></div>'; }
 
   var style = genPostStyle();
@@ -238,7 +244,7 @@ function genPostPage(article, allArticles) {
     '<body>',
     '    <div class="container">',
     '        <div class="card">',
-    '            <div class="back"><a href="index.html">← 返回主页</a></div>',
+    '            <div class="back"><a href="../index.html">← 返回主页</a></div>',
     '            <div class="article-header">',
     '                <h1 class="title">'+article.title+'</h1>',
     '                <div class="meta">',
@@ -278,15 +284,30 @@ async function main() {
   var articles = issues.map(buildArticleData);
   articles.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
 
+  // 生成 index.html
   fs.writeFileSync(path.join(__dirname, 'index.html'), genIndex(articles));
   console.log('✅ index.html 已生成');
 
+  // 清理旧的 posts 目录
+  var postsDir = path.join(__dirname, POST_DIR);
+  if (fs.existsSync(postsDir)) {
+    fs.readdirSync(postsDir).forEach(f => {
+      fs.unlinkSync(path.join(postsDir, f));
+    });
+    fs.rmdirSync(postsDir);
+  }
+
+  // 生成文章页
   var count = 0;
   articles.forEach(function(a) {
-    fs.writeFileSync(path.join(__dirname, 'post-' + a.id + '.html'), genPostPage(a, articles));
+    var dir = path.join(__dirname, POST_DIR);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(path.join(dir, 'post-' + a.id + '.html'), genPostPage(a, articles));
     count++;
   });
-  console.log('✅ 生成了 ' + count + ' 篇 post-*.html');
+  console.log('✅ 生成了 ' + count + ' 篇文章页到 ' + POST_DIR + '/ 目录');
   console.log('🎉 博客生成完成！');
 }
 
